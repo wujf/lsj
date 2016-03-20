@@ -1,0 +1,5 @@
+set -ex
+intf=$1
+ip addr add 10.186.238.101/24 peer 10.186.238.1 dev $intf
+ip link set $intf mtu 1300 up
+

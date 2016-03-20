@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+        "net"
 	"syscall"
 	"unsafe"
+        "time"
 )
 
 const (
@@ -12,6 +14,7 @@ const (
 	IFF_TAP      = 020002
 	TUNSETNOCSUM = 0x400454c8
 	TUNSETIFF    = 0x400454ca
+        MTU          = 1300
 )
 
 /*
@@ -51,9 +54,6 @@ func tunClose(fd int) {
     syscall.Close(fd)
 }
 
-func main() {
-    tunfd := tunOpen()
-    defer tunClose(tunfd)
+// TODO set ip,mtu,up
 
-    //ifconf
-}
+

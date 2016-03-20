@@ -5,6 +5,8 @@ import(
     "os"
     "net"
     "time"
+    "crypto/aes"
+    "crypto/cipher"
     "github.com/pkg/taptun"
 )
 
@@ -19,7 +21,11 @@ func down(tun *taptun.Tun, conn *net.UDPConn) {
             break
         }
         log.Println("read %d bytes from UDP\n", size)
-        n, err := tun.Write(buf)
+        // decrypt
+        decrypter := cipher.NewCFBDecrypter(block, iv)
+        decrypted := make([]byte, len(buf))
+        decrypter.XORKeySystem(key, buf[:size])
+        n, err := tun.Write(buf[:size])
         log.Printf("send %d bytes to TUN\n", n)
     }
 }
@@ -34,7 +40,7 @@ func up(tun *taptun.Tun, conn *net.UDPConn) {
         }
 
         log.Printf("read %d bytes from TUN\n", size)
-        n, err := conn.Write(buf, size)
+        n, err := conn.Write(buf[:size])
         if err != nil {
             log.Fatal("wirte UDP server error:", err)
             break
@@ -45,6 +51,11 @@ func up(tun *taptun.Tun, conn *net.UDPConn) {
 }
 
 func main() {
+    if len(os.Args) < 2 {
+        log.Println("Usage: ...");
+        return
+    }
+
     tun, err := taptun.OpenTun()
     if err != nil {
         log.Fatal("Open TUN device error: ", err)
@@ -70,7 +81,7 @@ func main() {
     go down(tun, conn)
 
     for {
-        time.Sleep(time.Second * 3)
+        time.Sleep(time.Second * 100)
         log.Println("Client running ...")
     }
 }

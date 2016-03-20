@@ -39,13 +39,14 @@ func up(tun *taptun.Tun, conn *net.UDPConn) {
     for {
         n, client, err := conn.ReadFromUDP(buf)
         if err != nil {
-            log.Println("read UDP: ", err)
+            log.Println("read UDP error: ", err)
             break
         }
         clientAddr = client
         log.Printf("read %d bytes from UDP\n", n)
-        n, err = tun.Write(buf)
-        log.Printf("send %d bytes to TUN\n", n)
+        if n, err = tun.Write(buf[:n]); err != nil {
+            log.Println("send to TUN error:", err)
+        }
     }
 }
 
@@ -59,7 +60,9 @@ func down(tun *taptun.Tun, conn *net.UDPConn) {
         }
 
         log.Printf("read %d bytes from TUN\n", size)
-        conn.WriteTo(buf, clientAddr)
+        if size, err = conn.WriteTo(buf[:size], clientAddr); err!= nil {
+            log.Println("send to UDP error:", err)
+        }
     }
 }
 
